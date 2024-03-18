@@ -13,6 +13,8 @@ void loop() {
   int speed = 1024;
   int dir = 0;
 
+  uint testVar = 23;
+
   delay(2200);
   digitalWrite(motorPinRightDir, dir);
   analogWrite(motorPinRightSpeed, speed);
