@@ -10,9 +10,6 @@
   $: statistics = true;
   $: functions = true;
 
-  $: loading = false;
-  // Start the MQTT broker
-
   const setSettings = (setting: string, value: boolean) => {
     if (setting === "joystick") {
       joystick = value;
@@ -28,13 +25,13 @@
 </script>
 
 <div class="wrapper">
-  <a class="esc" href="/"><div></div></a>
+  <!-- <a class="esc" href="/"><div></div></a> -->
   {#if joystick}
     <Joystick />
   {:else}
     <Keyboard />
   {/if}
-  <div class="modal-column">
+  <div class="card-column">
     <ControllerSettings {setSettings} />
     {#if statistics}
       <Statistics />
@@ -51,8 +48,6 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
   }
 
   .esc {
@@ -86,14 +81,14 @@
     transform: rotate(-45deg);
   }
 
-  .modal-column {
+  .card-column {
     display: flex;
     flex-direction: column;
     position: absolute;
     align-items: center;
     justify-content: flex-start;
-    top: 16px;
-    left: 16px;
+    top: 8px;
+    right: 40px;
     width: 200px;
     height: 90%;
   }

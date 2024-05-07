@@ -31,6 +31,9 @@
   },
   "type": "module",
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/svelte-fontawesome": "^0.2.2",
     "aedes": "^0.51.0",
     "aedes-persistence": "^9.1.2",
     "bootstrap": "^5.3.3",

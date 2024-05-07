@@ -1,24 +1,30 @@
 <script lang="ts">
 </script>
 
-<div class="settings">
+<div class="statistics">
   <h1 class="main-label custom-shadow">Statistics</h1>
-  <div class="setting">
-    <div class="label custom-shadow">Joystick</div>
-    <div class="slider-wrapper"></div>
+  <div class="statistic">
+    <div class="label custom-shadow">Speed:</div>
+    <div class="statistic-value">
+      5km/h
+    </div>
   </div>
-  <div class="setting">
-    <div class="label custom-shadow">Statistics</div>
-    <div class="slider-wrapper"></div>
+  <div class="statistic">
+    <div class="label custom-shadow">RPM: </div>
+    <div class="statistic-value">
+      60
+    </div>
   </div>
-  <div class="setting bottom">
-    <div class="label custom-shadow">Functions</div>
-    <div class="slider-wrapper"></div>
+  <div class="statistic bottom">
+    <div class="label custom-shadow">Status: </div>
+    <div class="statistic-value">
+      Active
+    </div>
   </div>
 </div>
 
 <style>
-  .settings {
+  .statistics {
     margin-bottom: 32px;
     position: relative;
     display: flex;
@@ -34,16 +40,17 @@
     width: 192px;
   }
 
-  .setting {
+  .statistic {
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 16px;
   }
 
-  .slider-wrapper {
+  .statistic-value {
+    color: #fff;
     position: absolute;
-    right: 4px;
+    right: 12px;
   }
 
   .label {

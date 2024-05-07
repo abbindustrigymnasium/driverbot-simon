@@ -4,7 +4,7 @@
 <div class="settings">
   <h1 class="main-label custom-shadow">Functions</h1>
   <div class="setting">
-    <div class="label custom-shadow">Joystick</div>
+    <div class="label custom-shadow">Figure 8</div>
     <div class="slider-wrapper"></div>
   </div>
   <div class="setting">

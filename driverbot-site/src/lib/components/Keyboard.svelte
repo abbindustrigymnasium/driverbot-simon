@@ -41,7 +41,7 @@
     const key = e.key.toUpperCase();
     if (allKeys.includes(key)) {
       pressedKeys.delete(key);
-      pressKey;
+      pressKey();
       updateDirection();
     }
   };

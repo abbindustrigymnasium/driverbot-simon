@@ -1,6 +1,8 @@
 <script lang="ts">
-  import "bootstrap/dist/css/bootstrap.min.css";
+  import Navigation from "$lib/components/Navigation.svelte";
   import { onMount } from "svelte";
+
+  import "bootstrap/dist/css/bootstrap.min.css";
 
   // Try to start the broker on mount
   onMount(async () => {
@@ -24,14 +26,15 @@
   });
 </script>
 
+
 <main>
+  <Navigation />
   <slot />
 </main>
 
 <style>
   main {
     margin: 0 auto;
-    padding: 0 20px;
     height: 100vh;
     overflow: hidden;
     box-sizing: border-box;
