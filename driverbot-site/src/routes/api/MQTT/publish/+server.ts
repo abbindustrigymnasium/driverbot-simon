@@ -12,7 +12,7 @@ export async function POST({ request, params }: PostRequest) {
 
 //   Check if the client is already connected
   if (!client) {
-    const client = mqtt.connect("mqtt://localhost:1883", {
+    const client = mqtt.connect("mqtt://3.121.8.173:1883", {
       clientId: "publisher",
       clean: false,
         //   @ts-ignore

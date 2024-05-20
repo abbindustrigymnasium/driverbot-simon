@@ -8,7 +8,7 @@
 
 const char *ssid = "ABB_Gym_IOT";
 const char *password = "Welcome2abb";
-const char *mqtt_server = "35.157.170.208"; // test.mosquitto.org
+const char *mqtt_server = "3.121.8.173"; // test.mosquitto.org
 const String directionTopic = "simon.svoboda@hitachigymnasiet.se/direction";
 
 WiFiClient espClient;
