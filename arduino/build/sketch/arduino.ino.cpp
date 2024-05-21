@@ -2,31 +2,22 @@
 #line 1 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+
 #include "controls.h"
+#include "communications.h"
 
-const char *ssid = "ABB_Gym_IOT";
-const char *password = "Welcome2abb";
-const char *mqtt_server = "3.121.8.173"; // test.mosquitto.org
-const String directionTopic = "simon.svoboda@hitachigymnasiet.se/direction";
-const String offlineTopic = "simon.svoboda@hitachigymnasiet.se/offline";
-
-WiFiClient espClient;
-PubSubClient client(espClient);
-
-unsigned long lastMsg = 0;
-#define MSG_BUFFER_SIZE (50)
-char msg[MSG_BUFFER_SIZE];
-
-#line 18 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
-void setup_wifi();
-#line 44 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
-void callback(char *topic, byte *payload, unsigned int length);
-#line 62 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
-void reconnect();
-#line 90 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
+#line 7 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
 void setup();
-#line 100 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
+#line 15 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
 void loop();
+#line 13 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
+void setupCommunications();
+#line 42 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
+void communicationsLifeCycleLoop();
+#line 52 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
+void receiveMessage(char *topic, byte *payload, unsigned int length);
+#line 70 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
+void reconnect();
 #line 9 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 void setupHardware();
 #line 22 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
@@ -41,100 +32,116 @@ void turnLeft();
 void turnRight();
 #line 98 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 void stop();
-#line 18 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
-void setup_wifi()
-{
-
-  delay(10);
-  // We start by connecting to a WiFi network
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-
-  randomSeed(micros());
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-}
-
-void callback(char *topic, byte *payload, unsigned int length)
-{
-  if (String(topic) == offlineTopic)
-  {
-    Serial.println("Publisher Offline");
-    stop();
-  }
-
-  // Parse the payload
-  String message;
-  for (int i = 0; i < length; i++)
-  {
-    message += (char)payload[i];
-  }
-  Serial.println(message);
-  determineDirection(message);
-}
-
-void reconnect()
-{
-  // Loop until we're reconnected
-  while (!client.connected())
-  {
-    Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
-    String clientId = "ESP8266Client-";
-    clientId += String(random(0xffff), HEX);
-    // Attempt to connect
-    if (client.connect(clientId.c_str()))
-    {
-      Serial.println("connected");
-      // ... and resubscribe
-      client.subscribe(directionTopic.c_str());
-      client.subscribe(offlineTopic.c_str());
-    }
-    else
-    {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
-}
-
+#line 7 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
 void setup()
 {
   Serial.begin(115200);
-  setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
-
+  Serial.println("Starting up");
+  setupCommunications();
   setupHardware();
 }
 
 void loop()
 {
-
-  if (!client.connected())
-  {
-    reconnect();
-  }
-  client.loop();
+  communicationsLifeCycleLoop();
 }
 #line 1 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
+#include "communications.h"
+#include "controls.h"
 
+const char *ssid = "ABB_Gym_IOT";
+const char *password = "Welcome2abb";
+const char *mqtt_server = "3.121.8.173"; // hiveMQ
+const String directionTopic = "simon.svoboda@hitachigymnasiet.se/direction";
+const String offlineTopic = "simon.svoboda@hitachigymnasiet.se/offline";
+
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+
+void setupCommunications()
+{
+    // Connect to WiFi
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+    }
+
+    randomSeed(micros());
+
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    // MQTT setup
+    mqttClient.setServer(mqtt_server, 1883);
+    mqttClient.setCallback(receiveMessage);
+
+    Serial.println("Setup complete");
+}
+
+void communicationsLifeCycleLoop()
+{
+    if (!mqttClient.connected())
+    {
+        Serial.println("MQTT Disconnected");
+        reconnect();
+    }
+    mqttClient.loop();
+}
+
+void receiveMessage(char *topic, byte *payload, unsigned int length)
+{
+    if (String(topic) == offlineTopic)
+    {
+        Serial.println("Publisher Offline");
+        stop();
+    }
+
+    // Parse the payload
+    String message;
+    for (int i = 0; i < length; i++)
+    {
+        message += (char)payload[i];
+    }
+    Serial.println(message);
+    determineDirection(message);
+}
+
+void reconnect()
+{
+    // Loop until mqtt client is connected
+    while (!mqttClient.connected())
+    {
+        Serial.print("Attempting MQTT connection...");
+        // Create a random Client ID
+        String mqttClientId = "ESP8266Client-";
+        mqttClientId += String(random(0xffff), HEX);
+        // Attempt to connect
+        if (mqttClient.connect(mqttClientId.c_str()))
+        {
+            Serial.println("connected");
+            // ... and resubscribe
+            mqttClient.subscribe(directionTopic.c_str());
+            mqttClient.subscribe(offlineTopic.c_str());
+        }
+        else
+        {
+            Serial.print("failed, rc=");
+            Serial.print(mqttClient.state());
+            Serial.println(" try again in 5 seconds");
+            // Wait 5 seconds before retrying
+            delay(5000);
+        }
+    }
+}
 #line 1 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 #include "controls.h"
 

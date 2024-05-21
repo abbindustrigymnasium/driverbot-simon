@@ -133,4 +133,5 @@ C:\Users\23simsvo\OneDrive\ -\ ABB\ Gymnasiet\teknik1\driverbot-simon\arduino\bu
  C:\Users\23simsvo\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\libraries\ESP8266WiFi\src/WiFiClientSecure.h \
  C:\Users\23simsvo\Documents\Arduino\libraries\PubSubClient\src/PubSubClient.h \
  C:\Users\23simsvo\OneDrive\ -\ ABB\ Gymnasiet\teknik1\driverbot-simon\arduino\build\sketch\controls.h \
- C:\Users\23simsvo\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\libraries\Servo\src/Servo.h
+ C:\Users\23simsvo\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\libraries\Servo\src/Servo.h \
+ C:\Users\23simsvo\OneDrive\ -\ ABB\ Gymnasiet\teknik1\driverbot-simon\arduino\build\sketch\communications.h
