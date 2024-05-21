@@ -16,7 +16,7 @@ export async function POST({ request, params }: PostRequest) {
       clientId: "publisher",
       clean: false,
         //   @ts-ignore
-      will: { topic: "offline", payload: "publisher", qos: 2 },
+      will: { topic: "simon.svoboda@hitachigymnasiet.se/offline", payload: "offline", qos: 0 },
     });
     setClientStore(client);
   }
