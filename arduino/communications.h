@@ -14,3 +14,4 @@ void setupCommunications();
 void communicationsLifeCycleLoop();
 void receiveMessage(char *topic, byte *payload, unsigned int length);
 void reconnect();
+void publishData(float motorSpeed);

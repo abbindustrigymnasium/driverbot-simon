@@ -1,10 +1,12 @@
 <script lang="ts">
-  import publishDirection from "$lib/frontendMQTT/publishDirection";
+  import publishDirection from "$lib/MQTT/publishDirection";
+  import { addRecord } from "$lib/stores/recordInputStore";
 
   const allKeys: string[] = ["W", "A", "S", "D"];
-  let pressedKeys: Set<string> = new Set();
+  let pressedKeys: Set<string> = new Set(); // Set to store the pressed keys
   let lastDirection = "";
 
+  // Function to animate a key when pressed
   const pressKey = () => {
     for (const key of pressedKeys.values()) {
       const elem: HTMLButtonElement | any = document.querySelector(
@@ -28,8 +30,9 @@
     }
   };
 
-  const onKeyDown = (e: any) => {
-    const key = e.key.toUpperCase();
+  // Function to handle key down event
+  const onKeyDown = (event: any) => {
+    const key = event.key.toUpperCase();
     if (allKeys.includes(key)) {
       pressedKeys.add(key);
       pressKey();
@@ -37,8 +40,9 @@
     }
   };
 
-  const onKeyUp = (e: any) => {
-    const key = e.key.toUpperCase();
+  // Function to handle key up event
+  const onKeyUp = (event: any) => {
+    const key = event.key.toUpperCase();
     if (allKeys.includes(key)) {
       pressedKeys.delete(key);
       pressKey();
@@ -46,23 +50,22 @@
     }
   };
 
+  // Determine the direction and publish it to the MQTT broker
   const updateDirection = () => {
     let direction = "stop";
-    if (pressedKeys.has("W")) {
-      if (pressedKeys.has("A")) direction = "nw";
-      else if (pressedKeys.has("D")) direction = "ne";
-      else direction = "n";
-    } else if (pressedKeys.has("S")) {
-      if (pressedKeys.has("A")) direction = "sw";
-      else if (pressedKeys.has("D")) direction = "se";
-      else direction = "s";
-    } else if (pressedKeys.has("A")) {
-      direction = "w";
-    } else if (pressedKeys.has("D")) {
-      direction = "e";
-    }
+
+    if (pressedKeys.has("W") && pressedKeys.has("A")) direction = "nw";
+    else if (pressedKeys.has("W") && pressedKeys.has("D")) direction = "ne";
+    else if (pressedKeys.has("W")) direction = "n";
+    else if (pressedKeys.has("S") && pressedKeys.has("A")) direction = "sw";
+    else if (pressedKeys.has("S") && pressedKeys.has("D")) direction = "se";
+    else if (pressedKeys.has("S")) direction = "s";
+    else if (pressedKeys.has("A")) direction = "w";
+    else if (pressedKeys.has("D")) direction = "e";
+
     if (direction !== lastDirection) {
       publishDirection(direction);
+      addRecord(direction);
       lastDirection = direction;
     }
   };
@@ -70,9 +73,11 @@
 
 <div class="keyboard">
   <div class="row-1">
+    <!-- W key is on another row -->
     <button
       class="key key-w"
       id="key-w"
+      
       on:mousedown={() => {
         onKeyDown({ key: "W" });
       }}
@@ -86,6 +91,7 @@
     </button>
   </div>
   <div class="row-2">
+    <!-- Loop through the keys to display them dynamically -->
     {#each allKeys as key (key)}
       {#if key !== "W"}
         <button
@@ -107,6 +113,7 @@
   </div>
 </div>
 
+<!-- Event handler for handling wasd presses -->
 <svelte:window on:keydown|preventDefault={onKeyDown} on:keyup={onKeyUp} />
 
 <style>

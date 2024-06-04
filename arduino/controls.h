@@ -1,7 +1,5 @@
 #include <Servo.h>
 
-#define motorPinRightDir 0   // D2
-#define motorPinRightSpeed 5 // D1
 #define servoPin 2           // D4
 
 extern Servo servo;
@@ -12,8 +10,10 @@ extern const float servoSidePointOffset;
 
 // Define controls.ino functions
 void setupHardware();
+void setMotorSpeed(float newMotorSpeed);
+void setServoAngle(float newServoAngle);
 void turnRight();
-void determineDirection(String message);
+void determineMovement(String message);
 void forward();
 void backward();
 void turnLeft();

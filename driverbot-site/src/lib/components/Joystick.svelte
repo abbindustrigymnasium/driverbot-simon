@@ -1,6 +1,7 @@
 <script lang="ts">
-  import publishDirection from "$lib/frontendMQTT/publishDirection";
+  import publishDirection from "$lib/MQTT/publishDirection";
   import { onMount } from "svelte";
+  import { addRecord } from "$lib/stores/recordInputStore";
 
   let nipplejs;
   let lastDirection = "";
@@ -64,6 +65,7 @@
       if (lastDirection !== direction) {
         lastDirection = direction;
         publishDirection(direction.toLocaleLowerCase());
+        addRecord(direction.toLocaleLowerCase());
         console.log(`Joystick is pointing: ${direction}`);
       }
     });
@@ -72,6 +74,7 @@
     manager.on("end", () => {
       // Publish "stop" when the user lets go of the joystick
       publishDirection("stop");
+      addRecord("stop");
       console.log(`Joystick is pointing: stop`);
     });
   });

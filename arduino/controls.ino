@@ -1,9 +1,13 @@
 #include "controls.h"
-
+#include "communications.h"
 
 Servo servo;
 const float servoMidPoint = 90;
-const float servoSidePointOffset = 45;
+float servoSidePointOffset = 90;
+float motorSpeed = 255;
+
+#define motorPinRightDir 0   // D2
+#define motorPinRightSpeed 5 // D1
 
 // Set up the motor and servo pins
 void setupHardware()
@@ -13,13 +17,23 @@ void setupHardware()
   servo.attach(servoPin);
 }
 
+void setMotorSpeed(float newMotorSpeed)
+{
+  motorSpeed = newMotorSpeed;
+}
+
+void setServoAngle(float newServoAngle)
+{
+  servoSidePointOffset = newServoAngle;
+}
+
 // Determine the direction based on the mqtt payload
 // n = north/forward
 // s = south/backwards
 // w = west/left
 // e = east/right
 // stop = stop
-void determineDirection(String message)
+void determineMovement(String message)
 {
   if (message == "n")
   {
@@ -69,16 +83,18 @@ void determineDirection(String message)
 
 void forward()
 {
-  digitalWrite(motorPinRightDir, HIGH);
-  analogWrite(motorPinRightSpeed, 255); // Speed motor
+  digitalWrite(motorPinRightDir, 1);
+  analogWrite(motorPinRightSpeed, motorSpeed); // Speed motor
+  publishData(motorSpeed);
   servo.write(servoMidPoint); // set servo to mid-point
   Serial.println("Forward");
 }
 
 void backward()
 {
-  digitalWrite(motorPinRightDir, LOW);
-  analogWrite(motorPinRightSpeed, 255); // Speed motor
+  digitalWrite(motorPinRightDir, 0);
+  analogWrite(motorPinRightSpeed, motorSpeed); // Speed motor
+  publishData(motorSpeed);
   servo.write(servoMidPoint); // set servo to mid-point
   Serial.println("Backward");
 }
@@ -86,12 +102,14 @@ void backward()
 void turnLeft()
 {
   servo.write(servoMidPoint - servoSidePointOffset); // set servo to turn left
+  publishData(motorSpeed);
   Serial.println("Left");
 }
 
 void turnRight()
 {
   servo.write(servoMidPoint + servoSidePointOffset); // set servo to turn right
+  publishData(motorSpeed);
   Serial.println("Right");
 }
 
@@ -99,6 +117,7 @@ void stop()
 {
   digitalWrite(motorPinRightDir, LOW);
   analogWrite(motorPinRightSpeed, 0); // Stop motor
+  publishData(0);
   servo.write(servoMidPoint);
   Serial.println("Stop");
 }

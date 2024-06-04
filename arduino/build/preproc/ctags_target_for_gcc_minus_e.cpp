@@ -17,6 +17,29 @@ void loop()
 {
   communicationsLifeCycleLoop();
 }
+
+// #define motorPinRightDir  0//D2
+// #define motorPinRightSpeed 5//D1
+
+// void setup() {
+//   // put your setup code here, to run once:
+//   pinMode(motorPinRightDir, OUTPUT);
+//   pinMode(motorPinRightSpeed, OUTPUT);
+
+//   Serial.begin(115200);
+// }
+
+// void loop() {
+//   int speed = 1024;
+//   int dir = 0;
+
+//   delay(2200);
+//   digitalWrite(motorPinRightDir, dir);
+//   analogWrite(motorPinRightSpeed, speed);
+//       delay(2200);      
+//   digitalWrite(motorPinRightDir, 1);
+//   analogWrite(motorPinRightSpeed, speed);
+// }
 # 1 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
 # 2 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino" 2
 # 3 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino" 2
@@ -25,7 +48,10 @@ const char *ssid = "ABB_Gym_IOT";
 const char *password = "Welcome2abb";
 const char *mqtt_server = "3.121.8.173"; // hiveMQ
 const String directionTopic = "simon.svoboda@hitachigymnasiet.se/direction";
+const String dataTopic = "simon.svoboda@hitachigymnasiet.se/data";
 const String offlineTopic = "simon.svoboda@hitachigymnasiet.se/offline";
+
+unsigned int ticks = 0;
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -67,6 +93,9 @@ void communicationsLifeCycleLoop()
         reconnect();
     }
     mqttClient.loop();
+
+    ticks++;
+
 }
 
 void receiveMessage(char *topic, byte *payload, unsigned int length)
@@ -84,7 +113,7 @@ void receiveMessage(char *topic, byte *payload, unsigned int length)
         message += (char)payload[i];
     }
     Serial.println(message);
-    determineDirection(message);
+    determineMovement(message);
 }
 
 void reconnect()
@@ -114,13 +143,23 @@ void reconnect()
         }
     }
 }
+
+void publishData(float motorSpeed)
+{
+    float rpm = motorSpeed / 100;
+    mqttClient.publish(dataTopic.c_str(), String(rpm).c_str());
+}
 # 1 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 # 2 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino" 2
-
+# 3 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino" 2
 
 Servo servo;
 const float servoMidPoint = 90;
-const float servoSidePointOffset = 45;
+const float servoSidePointOffset = 90;
+const float motorSpeed = 255;
+
+
+
 
 // Set up the motor and servo pins
 void setupHardware()
@@ -136,7 +175,7 @@ void setupHardware()
 // w = west/left
 // e = east/right
 // stop = stop
-void determineDirection(String message)
+void determineMovement(String message)
 {
   if (message == "n")
   {
@@ -186,16 +225,18 @@ void determineDirection(String message)
 
 void forward()
 {
-  digitalWrite(0 /* D2*/, 0x1);
-  analogWrite(5 /* D1*/, 255); // Speed motor
+  digitalWrite(0 /* D2*/, 1);
+  analogWrite(5 /* D1*/, motorSpeed); // Speed motor
+  publishData(motorSpeed);
   servo.write(servoMidPoint); // set servo to mid-point
   Serial.println("Forward");
 }
 
 void backward()
 {
-  digitalWrite(0 /* D2*/, 0x0);
-  analogWrite(5 /* D1*/, 255); // Speed motor
+  digitalWrite(0 /* D2*/, 0);
+  analogWrite(5 /* D1*/, motorSpeed); // Speed motor
+  publishData(motorSpeed);
   servo.write(servoMidPoint); // set servo to mid-point
   Serial.println("Backward");
 }
@@ -203,12 +244,14 @@ void backward()
 void turnLeft()
 {
   servo.write(servoMidPoint - servoSidePointOffset); // set servo to turn left
+  publishData(motorSpeed);
   Serial.println("Left");
 }
 
 void turnRight()
 {
   servo.write(servoMidPoint + servoSidePointOffset); // set servo to turn right
+  publishData(motorSpeed);
   Serial.println("Right");
 }
 
@@ -216,6 +259,7 @@ void stop()
 {
   digitalWrite(0 /* D2*/, 0x0);
   analogWrite(5 /* D1*/, 0); // Stop motor
+  publishData(0);
   servo.write(servoMidPoint);
   Serial.println("Stop");
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Slider from "$lib/components/Slider.svelte";
-  export let setSettings: Function;
+  export let setSettings: Function; // prop to change the sidebar settings visibility
 </script>
 
 <div class="settings">
@@ -12,9 +12,9 @@
     </div>
   </div>
   <div class="setting">
-    <div class="label custom-shadow">Statistics</div>
+    <div class="label custom-shadow">Car settings</div>
     <div class="slider-wrapper">
-      <Slider setting="statistics" checked {setSettings} />
+      <Slider setting="car" checked {setSettings} />
     </div>
   </div>
   <div class="setting bottom">

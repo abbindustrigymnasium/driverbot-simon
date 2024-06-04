@@ -1,9 +1,11 @@
 <script lang="ts">
+  // Props
   export let setSettings: Function;
   export let setting: string;
   export let checked = false;
 </script>
 
+<!-- Basic slider -->
 <label class="switch">
   <input
     type="checkbox"

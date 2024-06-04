@@ -5,7 +5,12 @@ const char *ssid = "ABB_Gym_IOT";
 const char *password = "Welcome2abb";
 const char *mqtt_server = "3.121.8.173"; // hiveMQ
 const String directionTopic = "simon.svoboda@hitachigymnasiet.se/direction";
+const String dataTopic = "simon.svoboda@hitachigymnasiet.se/data";
 const String offlineTopic = "simon.svoboda@hitachigymnasiet.se/offline";
+const String motorSpeedTopic = "simon.svoboda@hitachigymnasiet.se/motorSpeed";
+const String servoAngleTopic = "simon.svoboda@hitachigymnasiet.se/servoAngle";
+
+unsigned int ticks = 0;
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -47,6 +52,8 @@ void communicationsLifeCycleLoop()
         reconnect();
     }
     mqttClient.loop();
+
+    ticks++;
 }
 
 void receiveMessage(char *topic, byte *payload, unsigned int length)
@@ -57,14 +64,26 @@ void receiveMessage(char *topic, byte *payload, unsigned int length)
         stop();
     }
 
-    // Parse the payload
+// Parse the message
     String message;
     for (int i = 0; i < length; i++)
     {
         message += (char)payload[i];
     }
     Serial.println(message);
-    determineDirection(message);
+
+    if (String(topic) == motorSpeedTopic)
+    {
+        setMotorSpeed(message.toFloat());
+    }
+    else if (String(topic) == servoAngleTopic)
+    {
+        setServoAngle(message.toFloat());
+    }
+    else
+    {
+        determineMovement(message);
+    }
 }
 
 void reconnect()
@@ -93,4 +112,10 @@ void reconnect()
             delay(5000);
         }
     }
+}
+
+void publishData(float motorSpeed)
+{
+    float rpm = motorSpeed / 100;
+    mqttClient.publish(dataTopic.c_str(), String(rpm).c_str());
 }

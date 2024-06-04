@@ -5,6 +5,7 @@
     faHome,
     faInfoCircle,
     faGamepad,
+    faLocationDot,
   } from "@fortawesome/free-solid-svg-icons";
   import { page } from "$app/stores";
 
@@ -22,12 +23,17 @@
     case "/controller":
       selectedItem = "Controller";
       break;
+    case "/map":
+      selectedItem = "Map";
+      break;  
   }
 
+  // Array to store the nav items dynamically
   const navItems = [
     { name: "Home", icon: faHome, route: "/" },
     { name: "About", icon: faInfoCircle, route: "/about" },
     { name: "Controller", icon: faGamepad, route: "/controller" },
+    { name: "Map", icon: faLocationDot, route: "/map" },
   ];
 </script>
 
@@ -56,7 +62,6 @@
 </nav>
 
 <style>
-  /* The main navigation bar */
   nav {
     position: absolute;
     left: 0;
@@ -68,7 +73,6 @@
     flex-direction: column;
   }
 
-  /* Styles for the navigation items */
   a,
   li {
     text-decoration: none;
@@ -85,17 +89,14 @@
     font-size: 32px;
   }
 
-  /* Styles for the item name wrapper */
   .item-name-wrapper {
     font-size: 12px;
   }
 
-  /* Styles for the anchor tags */
   a {
     position: relative;
   }
 
-  /* Styles for the div inside the anchor tags */
   a > div {
     position: absolute;
     top: 0;
@@ -107,7 +108,6 @@
     justify-content: center;
   }
 
-  /* Styles for the selected item */
   .selected {
     background: #000;
   }
