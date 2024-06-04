@@ -5,13 +5,13 @@ const char *ssid = "ABB_Gym_IOT";
 const char *password = "Welcome2abb";
 const char *mqtt_server = "3.121.8.173"; // hiveMQ
 const String directionTopic = "simon.svoboda@hitachigymnasiet.se/direction";
-const String dataTopic = "simon.svoboda@hitachigymnasiet.se/data";
 const String offlineTopic = "simon.svoboda@hitachigymnasiet.se/offline";
 const String motorSpeedTopic = "simon.svoboda@hitachigymnasiet.se/motorSpeed";
 const String servoAngleTopic = "simon.svoboda@hitachigymnasiet.se/servoAngle";
 
 unsigned int ticks = 0;
 
+// Initialize the WiFi and MQTT client objects
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 

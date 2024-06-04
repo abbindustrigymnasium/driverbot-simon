@@ -9,6 +9,7 @@
 
   let svgElement: SVGSVGElement;
 
+  // Function to draw a straight line between two points
   function drawStraightLine(point1: point, point2: point) {
     const svgns = "http://www.w3.org/2000/svg";
     const line = document.createElementNS(svgns, "line");
@@ -16,42 +17,43 @@
     line.setAttribute("y1", point1.y.toString());
     line.setAttribute("x2", point2.x.toString());
     line.setAttribute("y2", point2.y.toString());
-    line.setAttribute("stroke", "black"); // Set the stroke color
-    line.setAttribute("stroke-width", "2"); // Set the stroke width
+    line.setAttribute("stroke", "black");
+    line.setAttribute("stroke-width", "2");
     svgElement.appendChild(line);
   }
 
+  // Function to draw a curved line between two points with a control point
   function drawCurvedLine(point1: point, point2: point, controlPoint: point) {
     const svgns = "http://www.w3.org/2000/svg";
     const path = document.createElementNS(svgns, "path");
 
-    // Construct the path string
     const pathData = `M ${point1.x} ${point1.y} Q ${controlPoint.x} ${controlPoint.y}, ${point2.x} ${point2.y}`;
 
     path.setAttribute("d", pathData);
-    path.setAttribute("stroke", "black"); // Set the stroke color
-    path.setAttribute("stroke-width", "2"); // Set the stroke width
-    path.setAttribute("fill", "none"); // Ensure the path is not filled
+    path.setAttribute("stroke", "black");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("fill", "none");
     svgElement.appendChild(path);
   }
 
+  // Function to draw an arc between two points with a given radius
   function drawArc(startPoint: point, endPoint: point, radius: number) {
     const svgns = "http://www.w3.org/2000/svg";
     const path = document.createElementNS(svgns, "path");
 
-    // Construct the path string
     const pathData = `M ${startPoint.x} ${startPoint.y} A ${radius} ${radius} 0 0 1 ${endPoint.x} ${endPoint.y}`;
 
     path.setAttribute("d", pathData);
-    path.setAttribute("stroke", "black"); // Set the stroke color
-    path.setAttribute("stroke-width", "2"); // Set the stroke width
-    path.setAttribute("fill", "none"); // Ensure the path is not filled
+    path.setAttribute("stroke", "black");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("fill", "none");
     svgElement.appendChild(path);
   }
 
   const svgWidth = 800;
   const svgHeight = 600;
 
+  // On mount, draw the track based on the recordInputStore value
   onMount(() => {
     let carAngle = 0;
     const lineLengthMultiplier = 40;
@@ -63,7 +65,7 @@
       let timeDifference = 0;
       if (i < $recordInputStore.length - 1) {
         timeDifference =
-          ($recordInputStore[i + 1].time.getTime() - time.getTime()) / 1000; // Convert to seconds
+          ($recordInputStore[i + 1].time.getTime() - time.getTime()) / 1000;
       }
 
       const lineLength = timeDifference * lineLengthMultiplier;
@@ -72,6 +74,7 @@
         console.error(`No track point found at index ${i}`);
         continue;
       }
+
       if (key === "n") {
         const endPoint = {
           x: startPoint.x + lineLength * Math.sin(carAngle * (Math.PI / 180)),
@@ -88,12 +91,10 @@
         drawStraightLine(startPoint, endPoint);
       } else if (key === "ne") {
         const startPoint = trackPoints[i];
-        const radius = 100; // Radius of the circle
+        const radius = 100;
 
-        // Calculate the angle that the arc should cover
         const arcAngle = lineLength / radius;
 
-        // Calculate the end point of the arc
         const endPoint = {
           x: startPoint.x + radius * Math.cos(carAngle + arcAngle),
           y: startPoint.y - radius * Math.sin(carAngle + arcAngle),
@@ -106,11 +107,10 @@
         drawArc(startPoint, endPoint, radius);
       }
     }
-    // drawCurvedLine({ x: 300, y: 300 }, { x: 400, y: 400 }, { x: 450, y: 250 });
-    // drawStraightLine({ x: 400, y: 400 }, { x: 500, y: 300 });
   });
 </script>
 
+<!-- SVG element to draw the track -->
 <svg
   bind:this={svgElement}
   width={svgWidth}
