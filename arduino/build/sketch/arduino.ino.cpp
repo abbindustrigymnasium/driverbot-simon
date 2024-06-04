@@ -10,29 +10,31 @@
 void setup();
 #line 15 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
 void loop();
-#line 16 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
+#line 18 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
 void setupCommunications();
-#line 45 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
+#line 48 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
 void communicationsLifeCycleLoop();
-#line 58 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
+#line 60 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
 void receiveMessage(char *topic, byte *payload, unsigned int length);
-#line 76 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
+#line 93 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
 void reconnect();
-#line 104 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
-void publishData(float motorSpeed);
 #line 13 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 void setupHardware();
-#line 26 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
+#line 20 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
+void setMotorSpeed(float newMotorSpeed);
+#line 25 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
+void setServoAngle(float newServoAngle);
+#line 36 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 void determineMovement(String message);
-#line 74 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
+#line 84 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 void forward();
-#line 83 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
-void backward();
 #line 92 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
+void backward();
+#line 100 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 void turnLeft();
-#line 99 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
-void turnRight();
 #line 106 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
+void turnRight();
+#line 112 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 void stop();
 #line 7 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\arduino.ino"
 void setup()
@@ -47,29 +49,6 @@ void loop()
 {
   communicationsLifeCycleLoop();
 }
-
-// #define motorPinRightDir  0//D2
-// #define motorPinRightSpeed 5//D1
-
-// void setup() {
-//   // put your setup code here, to run once:
-//   pinMode(motorPinRightDir, OUTPUT);
-//   pinMode(motorPinRightSpeed, OUTPUT);
-
-//   Serial.begin(115200);
-// }
-
-// void loop() {
-//   int speed = 1024;
-//   int dir = 0;
-
-//   delay(2200);
-//   digitalWrite(motorPinRightDir, dir);
-//   analogWrite(motorPinRightSpeed, speed);
-//       delay(2200);      
-//   digitalWrite(motorPinRightDir, 1);
-//   analogWrite(motorPinRightSpeed, speed);
-// }
 #line 1 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
 #include "communications.h"
 #include "controls.h"
@@ -80,6 +59,8 @@ const char *mqtt_server = "3.121.8.173"; // hiveMQ
 const String directionTopic = "simon.svoboda@hitachigymnasiet.se/direction";
 const String dataTopic = "simon.svoboda@hitachigymnasiet.se/data";
 const String offlineTopic = "simon.svoboda@hitachigymnasiet.se/offline";
+const String motorSpeedTopic = "simon.svoboda@hitachigymnasiet.se/motorSpeed";
+const String servoAngleTopic = "simon.svoboda@hitachigymnasiet.se/servoAngle";
 
 unsigned int ticks = 0;
 
@@ -115,6 +96,7 @@ void setupCommunications()
     Serial.println("Setup complete");
 }
 
+// Reconnect to MQTT server if disconnected
 void communicationsLifeCycleLoop()
 {
     if (!mqttClient.connected())
@@ -125,25 +107,39 @@ void communicationsLifeCycleLoop()
     mqttClient.loop();
 
     ticks++;
-
 }
 
 void receiveMessage(char *topic, byte *payload, unsigned int length)
 {
+    // Check if the message is an offline message
+    Serial.println(topic);
     if (String(topic) == offlineTopic)
     {
         Serial.println("Publisher Offline");
         stop();
     }
 
-    // Parse the payload
+    // Parse the message
     String message;
     for (int i = 0; i < length; i++)
     {
         message += (char)payload[i];
     }
     Serial.println(message);
-    determineMovement(message);
+
+    // Check if the message is a motor speed, servo angle message or a direction message
+    if (String(topic) == motorSpeedTopic)
+    {
+        setMotorSpeed(message.toFloat());
+    }
+    else if (String(topic) == servoAngleTopic)
+    {
+        setServoAngle(message.toFloat());
+    }
+    else
+    {
+        determineMovement(message);
+    }
 }
 
 void reconnect()
@@ -162,6 +158,8 @@ void reconnect()
             // ... and resubscribe
             mqttClient.subscribe(directionTopic.c_str());
             mqttClient.subscribe(offlineTopic.c_str());
+            mqttClient.subscribe(motorSpeedTopic.c_str());
+            mqttClient.subscribe(servoAngleTopic.c_str());
         }
         else
         {
@@ -173,20 +171,14 @@ void reconnect()
         }
     }
 }
-
-void publishData(float motorSpeed)
-{
-    float rpm = motorSpeed / 100;
-    mqttClient.publish(dataTopic.c_str(), String(rpm).c_str());
-}
 #line 1 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 #include "controls.h"
 #include "communications.h"
 
 Servo servo;
 const float servoMidPoint = 90;
-const float servoSidePointOffset = 90;
-const float motorSpeed = 255;
+float servoSidePointOffset = 90;
+float motorSpeed = 255;
 
 #define motorPinRightDir 0   // D2
 #define motorPinRightSpeed 5 // D1
@@ -197,6 +189,16 @@ void setupHardware()
   pinMode(motorPinRightDir, OUTPUT);
   pinMode(motorPinRightSpeed, OUTPUT);
   servo.attach(servoPin);
+}
+
+void setMotorSpeed(float newMotorSpeed)
+{
+  motorSpeed = newMotorSpeed;
+}
+
+void setServoAngle(float newServoAngle)
+{
+  servoSidePointOffset = newServoAngle;
 }
 
 // Determine the direction based on the mqtt payload
@@ -257,7 +259,6 @@ void forward()
 {
   digitalWrite(motorPinRightDir, 1);
   analogWrite(motorPinRightSpeed, motorSpeed); // Speed motor
-  publishData(motorSpeed);
   servo.write(servoMidPoint); // set servo to mid-point
   Serial.println("Forward");
 }
@@ -266,7 +267,6 @@ void backward()
 {
   digitalWrite(motorPinRightDir, 0);
   analogWrite(motorPinRightSpeed, motorSpeed); // Speed motor
-  publishData(motorSpeed);
   servo.write(servoMidPoint); // set servo to mid-point
   Serial.println("Backward");
 }
@@ -274,14 +274,12 @@ void backward()
 void turnLeft()
 {
   servo.write(servoMidPoint - servoSidePointOffset); // set servo to turn left
-  publishData(motorSpeed);
   Serial.println("Left");
 }
 
 void turnRight()
 {
   servo.write(servoMidPoint + servoSidePointOffset); // set servo to turn right
-  publishData(motorSpeed);
   Serial.println("Right");
 }
 
@@ -289,7 +287,6 @@ void stop()
 {
   digitalWrite(motorPinRightDir, LOW);
   analogWrite(motorPinRightSpeed, 0); // Stop motor
-  publishData(0);
   servo.write(servoMidPoint);
   Serial.println("Stop");
 }

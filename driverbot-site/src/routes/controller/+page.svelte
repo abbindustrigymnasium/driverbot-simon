@@ -54,7 +54,7 @@
     align-items: center;
     justify-content: flex-start;
     top: 8px;
-    right: 40px;
+    right: 64px;
     width: 200px;
     height: 90%;
   }

@@ -17,29 +17,6 @@ void loop()
 {
   communicationsLifeCycleLoop();
 }
-
-// #define motorPinRightDir  0//D2
-// #define motorPinRightSpeed 5//D1
-
-// void setup() {
-//   // put your setup code here, to run once:
-//   pinMode(motorPinRightDir, OUTPUT);
-//   pinMode(motorPinRightSpeed, OUTPUT);
-
-//   Serial.begin(115200);
-// }
-
-// void loop() {
-//   int speed = 1024;
-//   int dir = 0;
-
-//   delay(2200);
-//   digitalWrite(motorPinRightDir, dir);
-//   analogWrite(motorPinRightSpeed, speed);
-//       delay(2200);      
-//   digitalWrite(motorPinRightDir, 1);
-//   analogWrite(motorPinRightSpeed, speed);
-// }
 # 1 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino"
 # 2 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino" 2
 # 3 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\communications.ino" 2
@@ -50,6 +27,8 @@ const char *mqtt_server = "3.121.8.173"; // hiveMQ
 const String directionTopic = "simon.svoboda@hitachigymnasiet.se/direction";
 const String dataTopic = "simon.svoboda@hitachigymnasiet.se/data";
 const String offlineTopic = "simon.svoboda@hitachigymnasiet.se/offline";
+const String motorSpeedTopic = "simon.svoboda@hitachigymnasiet.se/motorSpeed";
+const String servoAngleTopic = "simon.svoboda@hitachigymnasiet.se/servoAngle";
 
 unsigned int ticks = 0;
 
@@ -85,6 +64,7 @@ void setupCommunications()
     Serial.println("Setup complete");
 }
 
+// Reconnect to MQTT server if disconnected
 void communicationsLifeCycleLoop()
 {
     if (!mqttClient.connected())
@@ -95,25 +75,39 @@ void communicationsLifeCycleLoop()
     mqttClient.loop();
 
     ticks++;
-
 }
 
 void receiveMessage(char *topic, byte *payload, unsigned int length)
 {
+    // Check if the message is an offline message
+    Serial.println(topic);
     if (String(topic) == offlineTopic)
     {
         Serial.println("Publisher Offline");
         stop();
     }
 
-    // Parse the payload
+    // Parse the message
     String message;
     for (int i = 0; i < length; i++)
     {
         message += (char)payload[i];
     }
     Serial.println(message);
-    determineMovement(message);
+
+    // Check if the message is a motor speed, servo angle message or a direction message
+    if (String(topic) == motorSpeedTopic)
+    {
+        setMotorSpeed(message.toFloat());
+    }
+    else if (String(topic) == servoAngleTopic)
+    {
+        setServoAngle(message.toFloat());
+    }
+    else
+    {
+        determineMovement(message);
+    }
 }
 
 void reconnect()
@@ -132,6 +126,8 @@ void reconnect()
             // ... and resubscribe
             mqttClient.subscribe(directionTopic.c_str());
             mqttClient.subscribe(offlineTopic.c_str());
+            mqttClient.subscribe(motorSpeedTopic.c_str());
+            mqttClient.subscribe(servoAngleTopic.c_str());
         }
         else
         {
@@ -143,20 +139,14 @@ void reconnect()
         }
     }
 }
-
-void publishData(float motorSpeed)
-{
-    float rpm = motorSpeed / 100;
-    mqttClient.publish(dataTopic.c_str(), String(rpm).c_str());
-}
 # 1 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino"
 # 2 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino" 2
 # 3 "C:\\Users\\23simsvo\\OneDrive - ABB Gymnasiet\\teknik1\\driverbot-simon\\arduino\\controls.ino" 2
 
 Servo servo;
 const float servoMidPoint = 90;
-const float servoSidePointOffset = 90;
-const float motorSpeed = 255;
+float servoSidePointOffset = 90;
+float motorSpeed = 255;
 
 
 
@@ -167,6 +157,16 @@ void setupHardware()
   pinMode(0 /* D2*/, 0x01);
   pinMode(5 /* D1*/, 0x01);
   servo.attach(2 /* D4*/);
+}
+
+void setMotorSpeed(float newMotorSpeed)
+{
+  motorSpeed = newMotorSpeed;
+}
+
+void setServoAngle(float newServoAngle)
+{
+  servoSidePointOffset = newServoAngle;
 }
 
 // Determine the direction based on the mqtt payload
@@ -227,7 +227,6 @@ void forward()
 {
   digitalWrite(0 /* D2*/, 1);
   analogWrite(5 /* D1*/, motorSpeed); // Speed motor
-  publishData(motorSpeed);
   servo.write(servoMidPoint); // set servo to mid-point
   Serial.println("Forward");
 }
@@ -236,7 +235,6 @@ void backward()
 {
   digitalWrite(0 /* D2*/, 0);
   analogWrite(5 /* D1*/, motorSpeed); // Speed motor
-  publishData(motorSpeed);
   servo.write(servoMidPoint); // set servo to mid-point
   Serial.println("Backward");
 }
@@ -244,14 +242,12 @@ void backward()
 void turnLeft()
 {
   servo.write(servoMidPoint - servoSidePointOffset); // set servo to turn left
-  publishData(motorSpeed);
   Serial.println("Left");
 }
 
 void turnRight()
 {
   servo.write(servoMidPoint + servoSidePointOffset); // set servo to turn right
-  publishData(motorSpeed);
   Serial.println("Right");
 }
 
@@ -259,7 +255,6 @@ void stop()
 {
   digitalWrite(0 /* D2*/, 0x0);
   analogWrite(5 /* D1*/, 0); // Stop motor
-  publishData(0);
   servo.write(servoMidPoint);
   Serial.println("Stop");
 }

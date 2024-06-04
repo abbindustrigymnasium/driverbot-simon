@@ -44,6 +44,7 @@ void setupCommunications()
     Serial.println("Setup complete");
 }
 
+// Reconnect to MQTT server if disconnected
 void communicationsLifeCycleLoop()
 {
     if (!mqttClient.connected())
@@ -58,13 +59,15 @@ void communicationsLifeCycleLoop()
 
 void receiveMessage(char *topic, byte *payload, unsigned int length)
 {
+    // Check if the message is an offline message
+    Serial.println(topic);
     if (String(topic) == offlineTopic)
     {
         Serial.println("Publisher Offline");
         stop();
     }
 
-// Parse the message
+    // Parse the message
     String message;
     for (int i = 0; i < length; i++)
     {
@@ -72,6 +75,7 @@ void receiveMessage(char *topic, byte *payload, unsigned int length)
     }
     Serial.println(message);
 
+    // Check if the message is a motor speed, servo angle message or a direction message
     if (String(topic) == motorSpeedTopic)
     {
         setMotorSpeed(message.toFloat());
@@ -102,6 +106,8 @@ void reconnect()
             // ... and resubscribe
             mqttClient.subscribe(directionTopic.c_str());
             mqttClient.subscribe(offlineTopic.c_str());
+            mqttClient.subscribe(motorSpeedTopic.c_str());
+            mqttClient.subscribe(servoAngleTopic.c_str());
         }
         else
         {
@@ -112,10 +118,4 @@ void reconnect()
             delay(5000);
         }
     }
-}
-
-void publishData(float motorSpeed)
-{
-    float rpm = motorSpeed / 100;
-    mqttClient.publish(dataTopic.c_str(), String(rpm).c_str());
 }

@@ -28,10 +28,17 @@ export default async function (component: string, value: number) {
         const message = new Paho.Message(value.toString());
         message.destinationName = topic;
         client!.send(message);
+        console.log(`Published ${value} to ${topic}`);
       },
     });
 
     // Update the client store with the new client
     clientStore.set(client);
+  } else {
+    // publish the direction to the topic
+    const message = new Paho.Message(value.toString());
+    message.destinationName = topic;
+    client!.send(message);
+    console.log(`Published ${value} to ${topic}`);
   }
 }

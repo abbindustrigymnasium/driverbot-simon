@@ -2,6 +2,7 @@
   import { FontAwesomeIcon } from "@fortawesome/svelte-fontawesome";
   import { faArrowLeft, faArrowRight } from "@fortawesome/free-solid-svg-icons";
   import publishCarSettings from "$lib/MQTT/publishCarSettings";
+  import { scale } from "svelte/transition";
 
   let motorSpeed = 255;
   let servoAngle = 90;
@@ -23,7 +24,7 @@
 
   // Functions to increase or decrease the servo angle
   const increaseServoAngle = () => {
-    if (servoAngle < 180) {
+    if (servoAngle < 110) {
       servoAngle += 5;
       publishCarSettings("servoAngle", servoAngle);
     }
@@ -37,22 +38,30 @@
   };
 </script>
 
-<div class="settings">
+<div class="settings" transition:scale>
   <h1 class="main-label custom-shadow">Car Settings</h1>
   <div class="setting">
     <div class="label custom-shadow">Motor Speed</div>
     <div class="input-wrapper">
-      <button class="arrow-left" on:click={decreaseMotorSpeed}><FontAwesomeIcon icon={faArrowLeft} /></button>
+      <button class="arrow-left" on:click={decreaseMotorSpeed}
+        ><FontAwesomeIcon icon={faArrowLeft} /></button
+      >
       <div>{motorSpeed}</div>
-      <button class="arrow-right" on:click={increaseMotorSpeed}><FontAwesomeIcon icon={faArrowRight} /></button>
+      <button class="arrow-right" on:click={increaseMotorSpeed}
+        ><FontAwesomeIcon icon={faArrowRight} /></button
+      >
     </div>
   </div>
   <div class="setting bottom">
     <div class="label custom-shadow">Servo angle</div>
     <div class="input-wrapper">
-      <button class="arrow-left" on:click={decreaseServoAngle}><FontAwesomeIcon icon={faArrowLeft} /></button>
+      <button class="arrow-left" on:click={decreaseServoAngle}
+        ><FontAwesomeIcon icon={faArrowLeft} /></button
+      >
       <div>{servoAngle}</div>
-      <button class="arrow-right" on:click={increaseServoAngle}><FontAwesomeIcon icon={faArrowRight} /></button>
+      <button class="arrow-right" on:click={increaseServoAngle}
+        ><FontAwesomeIcon icon={faArrowRight} /></button
+      >
     </div>
   </div>
 </div>
